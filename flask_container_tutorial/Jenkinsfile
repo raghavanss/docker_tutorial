@@ -1,0 +1,43 @@
+pipeline {
+
+    agent {
+        label 'srini_1'
+    }
+    stages {
+        stage('Welcome Step') {
+            steps {
+                echo "Welcome to first pipeline step 1"
+            }
+        }
+            stage ('Checkout') {
+                steps{
+                    echo "Checkout begins"
+                    git branch: 'main',
+                    url:  'https://github.com/raghavanss/docker_tutorial.git'
+
+
+                    
+                }
+            }
+            stage ('Build Docker image') {
+                steps {
+                    echo "Build docker image begins" 
+                    bat '''                 
+                    cd flask_container_tutorial
+                    docker build -t myflask:latest .
+                    '''
+                    
+                }
+            }
+            stage ("Deploy"){
+                steps{
+                    echo "Deploy the docker image"       
+                    bat '''             
+                    docker run -d --name myflask -p 5000:5000 myflask:latest
+                    '''
+                    
+                }
+            }
+
+            }
+        }
