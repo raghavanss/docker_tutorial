@@ -4,11 +4,11 @@ pipeline {
         label 'srini_1'
     }
     stages {
-        stage('Welcome Step') {
-            steps {
-                echo "Welcome to first pipeline step 1"
-            }
-        }
+        // stage('Welcome Step') {
+        //     steps {
+        //         echo "Welcome to first pipeline step 1"
+        //     }
+        // }
             stage ('Checkout') {
                 steps{
                     echo "Checkout begins"
@@ -19,7 +19,21 @@ pipeline {
                     
                 }
             }
-            stage ('Build Docker image') {
+          
+            stage ('Security Scan with SNYK') {
+                steps {
+                    echo "SNYK security scan begins..."
+                    bat '''
+                    snyk auth 85a6bd7a-200a-4946-868b-c1d9a86d9cd6
+                    cd flask_container_tutorial
+                    snyk test --docker myflask:latest --file=Dockerfile --severity-threshold=medium
+                    if %errorlevel% 1 error "Snyk scan failed"
+
+                    '''
+                }
+            }
+
+              stage ('Build Docker image') {
                 steps {
                     echo "Build docker image begins" 
                     bat '''                 
@@ -29,15 +43,45 @@ pipeline {
                     
                 }
             }
+
+
             stage ("Deploy"){
                 steps{
-                    echo "Deploy the docker image"       
+                    echo "Deploy the docker image"
+                    // This will move to ansible playbook deployment.
                     bat '''             
                     docker run -d --name myflask -p 5000:5000 myflask:latest
                     '''
-                    
                 }
             }
 
+            stage ("Functional Test"){
+                steps{
+                    echo "Functional test sample"
+                    // This will move to ansible playbook deployment.
+                    bat '''
+                    cd flask_container_tutorial
+                    python -m unittest tests\mytest.py
+                    if %errorlevel% 1 error "Functional testing failed"
+
+                    
+                    '''
+                }
             }
+
+           
+              stage ("Perf Test"){
+                steps{
+                    echo "Deploy the gatling image and trigger perf test"
+                    // This will move to ansible playbook deployment.
+                    bat '''             
+                    docker run -d --name myflask -p 5000:5000 myflask:latest
+                    '''
+                }
+            }
+        
+        
         }
+            
+            
+    }
